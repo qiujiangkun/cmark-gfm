@@ -122,6 +122,7 @@ static void free_node_as(cmark_node *node) {
     case CMARK_NODE_TEXT:
     case CMARK_NODE_HTML_INLINE:
     case CMARK_NODE_CODE:
+    case CMARK_NODE_MATH:
     case CMARK_NODE_HTML_BLOCK:
     case CMARK_NODE_FOOTNOTE_REFERENCE:
     case CMARK_NODE_FOOTNOTE_DEFINITION:
@@ -244,6 +245,8 @@ const char *cmark_node_get_type_string(cmark_node *node) {
     return "linebreak";
   case CMARK_NODE_CODE:
     return "code";
+  case CMARK_NODE_MATH:
+    return "math";
   case CMARK_NODE_HTML_INLINE:
     return "html_inline";
   case CMARK_NODE_CUSTOM_INLINE:
@@ -336,6 +339,7 @@ const char *cmark_node_get_literal(cmark_node *node) {
   case CMARK_NODE_TEXT:
   case CMARK_NODE_HTML_INLINE:
   case CMARK_NODE_CODE:
+  case CMARK_NODE_MATH:
   case CMARK_NODE_FOOTNOTE_REFERENCE:
     return cmark_chunk_to_cstr(NODE_MEM(node), &node->as.literal);
 
@@ -359,6 +363,7 @@ int cmark_node_set_literal(cmark_node *node, const char *content) {
   case CMARK_NODE_TEXT:
   case CMARK_NODE_HTML_INLINE:
   case CMARK_NODE_CODE:
+  case CMARK_NODE_MATH:
   case CMARK_NODE_FOOTNOTE_REFERENCE:
     cmark_chunk_set_cstr(NODE_MEM(node), &node->as.literal, content);
     return 1;

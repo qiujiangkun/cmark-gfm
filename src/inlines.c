@@ -25,6 +25,7 @@ static const char *RIGHTSINGLEQUOTE = "\xE2\x80\x99";
 // Macros for creating various kinds of simple.
 #define make_str(subj, sc, ec, s) make_literal(subj, CMARK_NODE_TEXT, sc, ec, s)
 #define make_code(subj, sc, ec, s) make_literal(subj, CMARK_NODE_CODE, sc, ec, s)
+#define make_math(subj, sc, ec, s) make_literal(subj, CMARK_NODE_MATH, sc, ec, s)
 #define make_raw_html(subj, sc, ec, s) make_literal(subj, CMARK_NODE_HTML_INLINE, sc, ec, s)
 #define make_linebreak(mem) make_simple(mem, CMARK_NODE_LINEBREAK)
 #define make_softbreak(mem) make_simple(mem, CMARK_NODE_SOFTBREAK)
@@ -175,6 +176,7 @@ static void subject_from_buf(cmark_mem *mem, int line_number, int block_offset, 
 }
 
 static CMARK_INLINE int isbacktick(int c) { return (c == '`'); }
+static CMARK_INLINE int isdollar(int c) { return (c == '$'); }
 
 static CMARK_INLINE unsigned char peek_char_n(subject *subj, bufsize_t n) {
   // NULL bytes should have been stripped out by now.  If they're
@@ -321,6 +323,51 @@ static bufsize_t scan_to_closing_backticks(subject *subj,
   return 0;
 }
 
+// Try to process a dollar code span that began with a
+// span of ticks of length openticklength length (already
+// parsed).  Return 0 if you don't find matching closing
+// dollars, otherwise return the position in the subject
+// after the closing dollars.
+static bufsize_t scan_to_closing_dollars(subject *subj,
+                                           bufsize_t openticklength) {
+
+    bool found = false;
+    if (openticklength > MAXBACKTICKS) {
+        // we limit backtick string length because of the array subj->backticks:
+        return 0;
+    }
+    if (subj->scanned_for_backticks &&
+        subj->backticks[openticklength] <= subj->pos) {
+        // return if we already know there's no closer
+        return 0;
+    }
+    while (!found) {
+        // read non backticks
+        unsigned char c;
+        while ((c = peek_char(subj)) && c != '$') {
+            advance(subj);
+        }
+        if (is_eof(subj)) {
+            break;
+        }
+        bufsize_t numticks = 0;
+        while (peek_char(subj) == '$') {
+            advance(subj);
+            numticks++;
+        }
+        // store position of ender
+        if (numticks <= MAXBACKTICKS) {
+            subj->backticks[numticks] = subj->pos - numticks;
+        }
+        if (numticks == openticklength) {
+            return (subj->pos);
+        }
+    }
+    // got through whole input without finding closer
+    subj->scanned_for_backticks = true;
+    return 0;
+}
+
 // Destructively modify string, converting newlines to
 // spaces, then removing a single leading + trailing space,
 // unless the code span consists entirely of space characters.
@@ -379,6 +426,28 @@ static cmark_node *handle_backticks(subject *subj, int options) {
     adjust_subj_node_newlines(subj, node, endpos - startpos, openticks.len, options);
     return node;
   }
+}
+// Parse backtick math section or raw dollar, return an inline.
+// Assumes that the subject has a dollar at the current position.
+static cmark_node *handle_dollars(subject *subj, int options) {
+    cmark_chunk opendollar = take_while(subj, isdollar);
+    bufsize_t startpos = subj->pos;
+    bufsize_t endpos = scan_to_closing_dollars(subj, opendollar.len);
+
+    if (endpos == 0) {      // not found
+        subj->pos = startpos; // rewind
+        return make_str(subj, subj->pos, subj->pos, opendollar);
+    } else {
+        cmark_strbuf buf = CMARK_BUF_INIT(subj->mem);
+
+        cmark_strbuf_set(&buf, subj->input.data + startpos,
+                         endpos - startpos - opendollar.len);
+        S_normalize_code(&buf);
+
+        cmark_node *node = make_math(subj, startpos, endpos - opendollar.len - 1, cmark_chunk_buf_detach(&buf));
+        adjust_subj_node_newlines(subj, node, endpos - startpos, opendollar.len, options);
+        return node;
+    }
 }
 
 
@@ -1315,6 +1384,9 @@ static int parse_inline(cmark_parser *parser, subject *subj, cmark_node *parent,
     break;
   case '`':
     new_inl = handle_backticks(subj, options);
+    break;
+  case '$': // CMARK_NODE_MATH
+    new_inl = handle_dollars(subj, options);
     break;
   case '\\':
     new_inl = handle_backslash(parser, subj);

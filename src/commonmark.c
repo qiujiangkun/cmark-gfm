@@ -394,6 +394,27 @@ static int S_render_node(cmark_renderer *renderer, cmark_node *node,
       LIT("`");
     }
     break;
+  case CMARK_NODE_MATH:
+    code = cmark_node_get_literal(node);
+    code_len = strlen(code);
+    numticks = shortest_unused_backtick_sequence(code);
+    extra_spaces = code_len == 0 ||
+                   code[0] == '$' || code[code_len - 1] == '$' ||
+                   code[0] == ' ' || code[code_len - 1] == ' ';
+    for (i = 0; i < numticks; i++) {
+        LIT("$");
+    }
+    if (extra_spaces) {
+        LIT(" ");
+    }
+    OUT(cmark_node_get_literal(node), allow_wrap, LITERAL);
+    if (extra_spaces) {
+        LIT(" ");
+    }
+    for (i = 0; i < numticks; i++) {
+        LIT("$");
+    }
+    break;
 
   case CMARK_NODE_HTML_INLINE:
     OUT(cmark_node_get_literal(node), false, LITERAL);

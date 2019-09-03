@@ -169,6 +169,7 @@ static int S_render_node(cmark_renderer *renderer, cmark_node *node,
     }
     break;
 
+  case CMARK_NODE_MATH:
   case CMARK_NODE_CODE:
     OUT(cmark_node_get_literal(node), allow_wrap, LITERAL);
     break;

@@ -32,6 +32,7 @@ static bool S_is_leaf(cmark_node *node) {
   case CMARK_NODE_SOFTBREAK:
   case CMARK_NODE_LINEBREAK:
   case CMARK_NODE_CODE:
+  case CMARK_NODE_MATH:
   case CMARK_NODE_HTML_INLINE:
     return 1;
   }
@@ -140,6 +141,7 @@ void cmark_node_own(cmark_node *root) {
       case CMARK_NODE_TEXT:
       case CMARK_NODE_HTML_INLINE:
       case CMARK_NODE_CODE:
+      case CMARK_NODE_MATH:
       case CMARK_NODE_HTML_BLOCK:
         cmark_chunk_to_cstr(iter->mem, &cur->as.literal);
         break;

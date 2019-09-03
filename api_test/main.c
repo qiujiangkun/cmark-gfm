@@ -444,6 +444,7 @@ void hierarchy(test_batch_runner *runner) {
   unsigned int all_inlines[] = {
     CMARK_NODE_TEXT, CMARK_NODE_SOFTBREAK,
     CMARK_NODE_LINEBREAK, CMARK_NODE_CODE,
+    CMARK_NODE_MATH,
     CMARK_NODE_HTML_INLINE, CMARK_NODE_EMPH,
     CMARK_NODE_STRONG, CMARK_NODE_LINK,
     CMARK_NODE_IMAGE, 0};
@@ -461,6 +462,7 @@ void hierarchy(test_batch_runner *runner) {
   test_content(runner, CMARK_NODE_SOFTBREAK, 0);
   test_content(runner, CMARK_NODE_LINEBREAK, 0);
   test_content(runner, CMARK_NODE_CODE, 0);
+  test_content(runner, CMARK_NODE_MATH, 0);
   test_content(runner, CMARK_NODE_HTML_INLINE, 0);
   test_content(runner, CMARK_NODE_EMPH, all_inlines);
   test_content(runner, CMARK_NODE_STRONG, all_inlines);

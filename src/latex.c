@@ -376,6 +376,10 @@ static int S_render_node(cmark_renderer *renderer, cmark_node *node,
     LIT("}");
     break;
 
+  case CMARK_NODE_MATH:
+    OUT(cmark_node_get_literal(node), false, NORMAL);
+    break;
+
   case CMARK_NODE_HTML_INLINE:
     break;
 

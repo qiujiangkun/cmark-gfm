@@ -96,6 +96,7 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
     switch (node->type) {
     case CMARK_NODE_TEXT:
     case CMARK_NODE_CODE:
+    case CMARK_NODE_MATH:
     case CMARK_NODE_HTML_INLINE:
       escape_html(html, node->as.literal.data, node->as.literal.len);
       break;
@@ -304,6 +305,11 @@ static int S_render_node(cmark_html_renderer *renderer, cmark_node *node,
     cmark_strbuf_puts(html, "</code>");
     break;
 
+  case CMARK_NODE_MATH:
+    cmark_strbuf_puts(html, "<math>");
+    escape_html(html, node->as.literal.data, node->as.literal.len);
+    cmark_strbuf_puts(html, "</math>");
+    break;
   case CMARK_NODE_HTML_INLINE:
     if (!(options & CMARK_OPT_UNSAFE)) {
       cmark_strbuf_puts(html, "<!-- raw HTML omitted -->");

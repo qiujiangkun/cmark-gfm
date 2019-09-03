@@ -65,6 +65,7 @@ static int S_render_node(cmark_node *node, cmark_event_type ev_type,
       break;
     case CMARK_NODE_TEXT:
     case CMARK_NODE_CODE:
+    case CMARK_NODE_MATH:
     case CMARK_NODE_HTML_BLOCK:
     case CMARK_NODE_HTML_INLINE:
       cmark_strbuf_puts(xml, " xml:space=\"preserve\">");
